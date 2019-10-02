@@ -20,6 +20,7 @@ import org.jbehave.core.model.Meta;
 import org.jbehave.core.model.Scenario;
 import org.jbehave.core.model.Story;
 import org.jbehave.core.reporters.StoryReporter;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -36,7 +37,6 @@ import org.vividus.proxy.IProxy;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -49,12 +49,8 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 public class ProxyAgentStoryReporterTests
 {
-    private static final String NAME = "name";
-    private static final String SOME_NAME = "someName";
-    private static final String PROXY = "proxy";
-    private static final String BLANK = "";
+    private static final String STORY_NAME = "someName";
     private static final List<String> PROXY_META = Arrays.asList("proxy");
-    private static final String TEST = "test";
     private static final String SCENARIO_TITLE = "scenario";
 
     @Mock
@@ -72,84 +68,20 @@ public class ProxyAgentStoryReporterTests
     @InjectMocks
     private ProxyAgentStoryReporter proxyAgentStoryReporter;
 
-    // TODO for the final variant, create another branch, delete all the comments here
-
-    // Created
-
-//    @Test
-//    void testBeforeStoryDryRun()
-//    {
-//        when(configuration.dryRun()).thenReturn(true);
-//        RunningStory runningStory = new RunningStory();
-//        Story story = mock(Story.class);
-//        runningStory.setStory(story);
-//        when(story.getName()).thenReturn("name");
-//        when(bddRunContext.getRunningStory()).thenReturn(runningStory);
-//        proxyAgentStoryReporter.beforeStory(story, false);
-//        verifyZeroInteractions(proxy);
-//    }
-//
-//    @Test
-//    void testBeforeStoryWithGivenStory()
-//    {
-//        RunningStory runningStory = new RunningStory();
-//        Story story = mock(Story.class);
-//        runningStory.setStory(story);
-//        when(story.getName()).thenReturn(NAME);
-//        when(bddRunContext.getRunningStory()).thenReturn(runningStory);
-//        proxyAgentStoryReporter.beforeStory(story, true);
-//        verifyZeroInteractions(proxy);
-//    }
-//
-//    @Test
-//    void testBeforeStoryWithBeforeStory()
-//    {
-//        RunningStory runningStory = new RunningStory();
-//        Story story = mock(Story.class);
-//        runningStory.setStory(story);
-//        when(story.getName()).thenReturn("BeforeStories");
-//        when(bddRunContext.getRunningStory()).thenReturn(runningStory);
-//        proxyAgentStoryReporter.beforeStory(story, false);
-//        verifyZeroInteractions(proxy);
-//    }
-//
-//    @Test
-//    void testBeforeStoryWithAfterStory()
-//    {
-//        RunningStory runningStory = new RunningStory();
-//        Story story = mock(Story.class);
-//        runningStory.setStory(story);
-//        when(story.getName()).thenReturn("AfterStories");
-//        when(bddRunContext.getRunningStory()).thenReturn(runningStory);
-//        proxyAgentStoryReporter.beforeStory(story, false);
-//        verifyZeroInteractions(proxy);
-//    }
-//
-//    @Test
-//    void testBeforeStoryWithProxyDisabled()
-//    {
-//        RunningStory runningStory = new RunningStory();
-//        Story story = mock(Story.class);
-//        runningStory.setStory(story);
-//        when(story.getName()).thenReturn(NAME);
-//        when(bddRunContext.getRunningStory()).thenReturn(runningStory);
-//        proxyAgentStoryReporter.setProxyEnabled(false);
-//        Meta meta = mock(Meta.class);
-//        when(story.getMeta()).thenReturn(meta);
-////        when(meta.getProperty(PROXY)).thenReturn(BLANK);
-//        proxyAgentStoryReporter.beforeStory(story, false);
-//        verifyZeroInteractions(proxy);
-//
-//    }
-
-    // Copypasted
+    @BeforeEach
+    void beforeEach()
+    {
+        proxyAgentStoryReporter.setNext(next);
+    }
 
     @Test
     void testBeforeGivenStory()
     {
-        RunningStory runningStory = mockRunningStoryWithName(SOME_NAME);
+        RunningStory runningStory = mockRunningStoryWithName(STORY_NAME);
         proxyAgentStoryReporter.beforeStory(runningStory.getStory(), true);
         verifyZeroInteractions(proxy);
+        verify(next).beforeStory(runningStory.getStory(), true);
+
     }
 
     @Test
@@ -158,6 +90,7 @@ public class ProxyAgentStoryReporterTests
         RunningStory runningStory = mockRunningStoryWithName("BeforeStories");
         proxyAgentStoryReporter.beforeStory(runningStory.getStory(), false);
         verifyZeroInteractions(proxy);
+        verify(next).beforeStory(runningStory.getStory(), false);
     }
 
     @Test
@@ -166,57 +99,47 @@ public class ProxyAgentStoryReporterTests
         RunningStory runningStory =  mockRunningStoryWithName("AfterStories");
         proxyAgentStoryReporter.beforeStory(runningStory.getStory(), false);
         verifyZeroInteractions(proxy);
+        verify(next).beforeStory(runningStory.getStory(), false);
     }
 
     @Test
     void testBeforeStoryProxy()
     {
-        RunningStory runningStory =  mockRunningStoryWithName(SOME_NAME);
-//        proxyAgentStoryReporter.setNext(next);
-//        when(runningStory.getStory().getMeta()).thenReturn(new Meta(PROXY_META));
+        RunningStory runningStory =  mockRunningStoryWithName(STORY_NAME);
         proxyAgentStoryReporter.setProxyEnabled(true);
         proxyAgentStoryReporter.beforeStory(runningStory.getStory(), false);
         verify(proxy).start();
+        verify(next).beforeStory(runningStory.getStory(), false);
     }
 
     @Test
     void testBeforeStoryProxyFromStoryMeta()
     {
-        RunningStory runningStory =  mockRunningStoryWithName(SOME_NAME);
-//        proxyAgentStoryReporter.setNext(next);
+        RunningStory runningStory =  mockRunningStoryWithName(STORY_NAME);
         when(runningStory.getStory().getMeta()).thenReturn(new Meta(PROXY_META));
         proxyAgentStoryReporter.beforeStory(runningStory.getStory(), false);
         verify(proxy).start();
+        verify(next).beforeStory(runningStory.getStory(), false);
     }
 
     @Test
     void testBeforeStoryDryRun()
     {
         when(configuration.dryRun()).thenReturn(true);
-        Story story = mock(Story.class);
-        when(story.getName()).thenReturn(SOME_NAME);
-        RunningStory runningStory = runningStory(story);
-
-        // TODO why is it here?
-//        proxyAgentStoryReporter.setNext(next);
-//        proxyAgentStoryReporter.setProxyEnabled(false);
-
+        RunningStory runningStory = mockRunningStoryWithName(STORY_NAME);
         proxyAgentStoryReporter.beforeStory(runningStory.getStory(), false);
         verifyZeroInteractions(proxy);
+        verify(next).beforeStory(runningStory.getStory(), false);
     }
 
     @Test
     void testBeforeScenarioDryRun()
     {
         when(configuration.dryRun()).thenReturn(true);
-        RunningStory runningStory = new RunningStory();
-        Story story = mock(Story.class);
-        runningStory.setStory(story);
-        Scenario scenario = runningScenario(SCENARIO_TITLE, Collections.emptyList(), runningStory);
-//        proxyAgentStoryReporter.setProxyRecordingEnabled(false);
-        proxyAgentStoryReporter.setNext(next);
+        Scenario scenario = new Scenario(SCENARIO_TITLE, Collections.emptyList());
         proxyAgentStoryReporter.beforeScenario(scenario);
         verifyZeroInteractions(proxy);
+        verify(next).beforeScenario(scenario);
     }
 
     @Test
@@ -224,67 +147,59 @@ public class ProxyAgentStoryReporterTests
     {
         proxyAgentStoryReporter.setProxyRecordingEnabled(true);
         when(proxy.isStarted()).thenReturn(Boolean.TRUE);
-        proxyAgentStoryReporter.beforeScenario(mock(Scenario.class));
+        Scenario scenario = new Scenario(SCENARIO_TITLE, Collections.emptyList());
+        proxyAgentStoryReporter.beforeScenario(scenario);
         verify(proxy).clearRequestFilters();
         verify(proxy).startRecording();
+        verify(next).beforeScenario(scenario);
     }
 
     @Test
     void testBeforeScenarioStartProxyRecordingByScenarioMeta()
     {
-        Story story = mock(Story.class);
-        when(story.getMeta()).thenReturn(new Meta());
-        RunningStory runningStory = runningStory(story);
-        when(bddRunContext.getRunningStory()).thenReturn(runningStory);
-        Scenario scenario = runningScenario(SCENARIO_TITLE, PROXY_META, runningStory);
+        Scenario scenario = mockRunningScenarioAndStoryWithMeta(Collections.emptyList(), PROXY_META);
         proxyAgentStoryReporter.setProxyRecordingEnabled(false);
         when(proxy.isStarted()).thenReturn(Boolean.TRUE);
-
         proxyAgentStoryReporter.beforeScenario(scenario);
         verify(proxy).clearRequestFilters();
         verify(proxy).startRecording();
+        verify(next).beforeScenario(scenario);
     }
-
-    // TODO ? add testBeforeScenarioStartProxyRecordingByStoryMeta
 
     @Test
     void testBeforeScenarioNoProxyRecordingStart()
     {
-        Scenario scenario = mockRunningScenarioWithMeta(SCENARIO_TITLE, Collections.emptyList(), Collections.emptyList());
+        Scenario scenario = mockRunningScenarioAndStoryWithMeta(Collections.emptyList(), Collections.emptyList());
         proxyAgentStoryReporter.setProxyRecordingEnabled(false);
-        proxyAgentStoryReporter.setNext(next);
         when(proxy.isStarted()).thenReturn(Boolean.TRUE);
-
         proxyAgentStoryReporter.beforeScenario(scenario);
         verify(proxy, never()).clearRequestFilters();
         verify(proxy, never()).startRecording();
+        verify(next).beforeScenario(scenario);
     }
 
     @Test
     void testBeforeScenarioStartProxy()
     {
-        Scenario scenario = mockRunningScenarioWithMeta(SCENARIO_TITLE, Collections.emptyList(), PROXY_META);
-        // redundant throughout? since mocks return false by default
-//        proxyAgentStoryReporter.setProxyRecordingEnabled(false);
-//        when(proxy.isStarted()).thenReturn(Boolean.FALSE);
+        Scenario scenario = mockRunningScenarioAndStoryWithMeta(Collections.emptyList(), PROXY_META);
         proxyAgentStoryReporter.beforeScenario(scenario);
         verify(proxy).start();
+        verify(next).beforeScenario(scenario);
     }
 
     @Test
     void testBeforeScenarioNoProxyStart()
     {
-        Scenario scenario = mockRunningScenarioWithMeta(SCENARIO_TITLE, Collections.emptyList(), Collections.emptyList());
+        Scenario scenario = mockRunningScenarioAndStoryWithMeta(Collections.emptyList(), Collections.emptyList());
         proxyAgentStoryReporter.beforeScenario(scenario);
         verify(proxy, never()).start();
+        verify(next).beforeScenario(scenario);
     }
 
     @Test
     void testBeforeScenarioStartProxyAndRecording()
     {
-        Scenario scenario = mockRunningScenarioWithMeta(SCENARIO_TITLE, PROXY_META, Collections.emptyList());
-//        proxyAgentStoryReporter.setProxyRecordingEnabled(false);
-//        proxyAgentStoryReporter.setNext(next);
+        Scenario scenario = mockRunningScenarioAndStoryWithMeta(PROXY_META, Collections.emptyList());
         when(proxy.isStarted()).thenAnswer(new Answer<Boolean>()
         {
             private int count;
@@ -299,65 +214,59 @@ public class ProxyAgentStoryReporterTests
         verify(proxy).start();
         verify(proxy).clearRequestFilters();
         verify(proxy).startRecording();
+        verify(next).beforeScenario(scenario);
     }
 
     @Test
     void testBeforeScenarioStartProxyEnabledInStoryMeta()
     {
-        Scenario scenario = mockRunningScenarioWithMeta(SCENARIO_TITLE, PROXY_META, Collections.emptyList());
-//        when(proxy.isStarted()).thenReturn(Boolean.FALSE);
+        Scenario scenario = mockRunningScenarioAndStoryWithMeta(PROXY_META, Collections.emptyList());
         proxyAgentStoryReporter.beforeScenario(scenario);
         verify(proxy).start();
+        verify(next).beforeScenario(scenario);
     }
 
     @Test
     void testAfterScenarioWhenNoProxyIsStarted()
     {
-//        Story story = mock(Story.class);
-//        RunningStory runningStory = new RunningStory();
-//        runningStory.setStory(story);
-//        Scenario scenario = new Scenario(SCENARIO_TITLE, new Meta(Collections.emptyList()));
-//        RunningScenario runningScenario = new RunningScenario();
-//        runningScenario.setScenario(scenario);
-//        runningStory.setRunningScenario(runningScenario);
-//        when(proxy.isStarted()).thenReturn(Boolean.FALSE);
         proxyAgentStoryReporter.afterScenario();
         verifyProxyInactivity();
+        verify(next).afterScenario();
     }
 
     @Test
     void testAfterScenarioWhenProxyIsStartedButNoCleanUpIsNeeded()
     {
-        mockRunningScenarioWithMeta(SCENARIO_TITLE, Collections.emptyList(), Collections.emptyList());
+        Scenario scenario = mockRunningScenarioAndStoryWithMeta(Collections.emptyList(), Collections.emptyList());
         proxyAgentStoryReporter.setProxyEnabled(true);
-//        proxyAgentStoryReporter.setProxyRecordingEnabled(false);
         when(proxy.isStarted()).thenReturn(Boolean.TRUE);
         proxyAgentStoryReporter.afterScenario();
         verifyProxyInactivity();
+        verify(next).afterScenario();
     }
 
     @Test
     void testAfterScenarioWhenProxyIsStartedAndStopRecordingIsNeededButProxyStopIsNot()
     {
-        mockRunningScenario(SCENARIO_TITLE,  Collections.emptyList());
-//        mockRunningScenarioWithMeta(SCENARIO_TITLE, Collections.emptyList(), Collections.emptyList());
-//        proxyAgentStoryReporter.setProxyEnabled(false);
+        Scenario scenario = mockRunningScenarioWithMetaAndEmptyStory(Collections.emptyList());
         proxyAgentStoryReporter.setProxyRecordingEnabled(true);
         when(proxy.isStarted()).thenReturn(Boolean.TRUE);
         proxyAgentStoryReporter.afterScenario();
         verify(proxy).stopRecording();
         verifyNoMoreInteractions(proxy);
+        verify(next).afterScenario();
     }
 
     @Test
     void testAfterScenarioWhenProxyIsStartedAndStopRecordingAndStopProxyAreNeeded()
     {
-        mockRunningScenario(SCENARIO_TITLE,  PROXY_META);
+        Scenario scenario = mockRunningScenarioWithMetaAndEmptyStory(PROXY_META);
         proxyAgentStoryReporter.setProxyRecordingEnabled(true);
         when(proxy.isStarted()).thenReturn(Boolean.TRUE);
         proxyAgentStoryReporter.afterScenario();
         verify(proxy).stopRecording();
         verify(proxy).stop();
+        verify(next).afterScenario();
     }
 
     @Test
@@ -365,6 +274,7 @@ public class ProxyAgentStoryReporterTests
     {
         proxyAgentStoryReporter.afterStory(true);
         verifyZeroInteractions(proxy);
+        verify(next).afterStory(true);
     }
 
     @Test
@@ -372,6 +282,7 @@ public class ProxyAgentStoryReporterTests
     {
         proxyAgentStoryReporter.afterStory(false);
         verifyProxyInactivity();
+        verify(next).afterStory(false);
     }
 
     @Test
@@ -380,11 +291,10 @@ public class ProxyAgentStoryReporterTests
         when(proxy.isStarted()).thenReturn(Boolean.TRUE);
         proxyAgentStoryReporter.afterStory(false);
         verify(proxy).stop();
+        verify(next).afterStory(false);
     }
 
-    // TODO refactor the utilities
-
-    private RunningStory runningStory(Story story)
+    private RunningStory mockRunningStoryInBddRunContext(Story story)
     {
         RunningStory runningStory = new RunningStory();
         runningStory.setStory(story);
@@ -396,50 +306,35 @@ public class ProxyAgentStoryReporterTests
     {
         Story story = mock(Story.class);
         when(story.getName()).thenReturn(storyName);
-//        when(story.getMeta()).thenReturn(new Meta(storyMeta));
-        return runningStory(story);
+        return mockRunningStoryInBddRunContext(story);
     }
 
-    private Scenario runningScenario(String scenarioTitle, List<String> scenarioMeta, RunningStory runningStory)
+    private Scenario mockRunningScenario(List<String> scenarioMeta, RunningStory runningStory)
     {
-        Scenario scenario = new Scenario(scenarioTitle, new Meta(scenarioMeta));
+        Scenario scenario = new Scenario(SCENARIO_TITLE, new Meta(scenarioMeta));
         RunningScenario runningScenario = new RunningScenario();
         runningScenario.setScenario(scenario);
         runningStory.setRunningScenario(runningScenario);
         return scenario;
     }
 
-    private Scenario mockRunningScenarioWithMeta(String scenarioTitle, List<String> storyMeta,
-                                                 List<String> scenarioMeta)
-    {
-        RunningStory runningStory = mockRunningStoryWithMeta(storyMeta);
-        return  runningScenario(scenarioTitle, scenarioMeta, runningStory);
-    }
-
-    private RunningStory mockRunningStoryWithMeta(List<String> storyMeta)
+    private Scenario mockRunningScenarioAndStoryWithMeta(List<String> storyMeta, List<String> scenarioMeta)
     {
         Story story = mock(Story.class);
         when(story.getMeta()).thenReturn(new Meta(storyMeta));
-        return runningStory(story);
+        RunningStory runningStory = mockRunningStoryInBddRunContext(story);
+        return mockRunningScenario(scenarioMeta, runningStory);
+    }
+
+    private Scenario mockRunningScenarioWithMetaAndEmptyStory(List<String> scenarioMeta)
+    {
+        RunningStory runningStory = mockRunningStoryInBddRunContext(mock(Story.class));
+        return mockRunningScenario(scenarioMeta, runningStory);
     }
 
     private void verifyProxyInactivity()
     {
         verify(proxy).isStarted();
         verifyNoMoreInteractions(proxy);
-    }
-
-    // TODO clarify in naming why 2 utility mocking method duplicates are needed
-
-    private RunningStory mockRunningStory()
-    {
-        Story story = mock(Story.class);
-        return runningStory(story);
-    }
-
-    private void mockRunningScenario(String scenarioTitle, List<String> scenarioMeta)
-    {
-        RunningStory runningStory = mockRunningStory();
-        runningScenario(scenarioTitle, scenarioMeta, runningStory);
     }
 }
